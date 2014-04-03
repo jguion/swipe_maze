@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<style> 
+	    <!--
+	    body{
+	    	background-color: #efece6;
+	    	font-family: 'Helvetica Neue','Arial', sans-serif;
+	    }
+	    #maze_holder {
+	    	float:left;
+	    	margin:0 auto;
+	    	max-height:412px;
+	    	max-width: 412px;
+	    	overflow: hidden;
+	    }
+	    #maze_layout {
+	    	-webkit-transition:all 1.0s ease-in-out;
+		    -moz-transition:all 1.0s ease-in-out;
+			-o-transition:all 1.0s ease-in-out;
+		  	transition:all 1.0s ease-in-out;
+	    	/*min-height:4120px;
+	    	min-width: 4120px;*/
+	    }
+	    .maze_block {
+	    	/**-webkit-transition-duration: 0.3s;
+	    	-webkit-transition-property: -webkit-transform;
+	    	-webkit-transform: translateZ(0);*/
+	    	background-color:#333;
+	    	border:6px solid #e1e1e1;
+	    	display: block;
+	    	float:left;
+	    	height:400px;
+	    	margin:0;
+	    	padding:0;
+	    	width:400px;
+			/*transition-property: all;
+			transition-duration: .5s;
+			transition-timing-function: cubic-bezier(0, 1, 0.5, 1);*/
+	    }
+	    /*.maze_block:hover{
+	    	-webkit-transform: scale(1.05);
+	    }*/
+      	.maze_block.good{
+    		background-color:#5FBA50;
+    	}
+    	.maze_block.bad{
+    		background-color:#e96955;
+	    	}
+	    ul{
+	    	-webkit-padding-start: 0px;
+	    	list-style-type: none;
+	    }
+	    .button{
+	    	-webkit-transition-duration: 0.3s;
+	    	-webkit-transition-property: -webkit-transform;
+	    	-webkit-transform: translateZ(0);
+	    	background-color:#5FBA50;
+	    	border:2px solid #333;
+	    	border-radius:5px;
+	    	float: left;
+	    	height:25px;
+	    	margin-right: 10px;
+	    	vertical-align: baseline;
+	    }
+	    .button:hover{
+	    	-webkit-transform: scale(1.1);
+	    }
+	    .nav{
+	    	height:30px;
+	    	width:100%;
+	    }
+	    .message{
+	    	float:left;
+	    	padding: 12px;
+	    }
+	    .settings_btn{
+	    	float:right;
+	    }
+	    .settings_modal{
+	    	-webkit-transition:all 1.0s ease-in-out;
+		    -moz-transition:all 1.0s ease-in-out;
+			-o-transition:all 1.0s ease-in-out;
+		  	transition:all 1.0s ease-in-out;
+	    }
+	    .map{
+	    	-webkit-transition:all 1.0s ease-in-out;
+		    -moz-transition:all 1.0s ease-in-out;
+			-o-transition:all 1.0s ease-in-out;
+		  	transition:all 1.0s ease-in-out;
+	    	background-color: #e9e9e9;
+	    	float:right;
+	    	height: 100px;
+	    	width: 100px;
+	    }
+	    .my_location{
+	    	-webkit-transition:all 1.0s ease-in-out;
+		    -moz-transition:all 1.0s ease-in-out;
+			-o-transition:all 1.0s ease-in-out;
+		  	transition:all 1.0s ease-in-out;
+	    }
+	    -->
+	</style>
+  	<!--<script type='text/javascript' src="http://code.jquery.com/jquery-1.9.1.min.js"></script>-->
+  	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css">
+  	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  	<script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+  	<script type='text/javascript' src="plugins/jquery.touchSwipe.min.js"></script>
+  	<script type="text/javascript">
+  		var maze_matrix;
+		var DIRECTIONS = [[0,1], [0,-1], [-1,0], [1,0]];
+		var size = 10;
+		var translate_percent = 100.00 / size;
+
+		function initialize_maze(){
+			maze_matrix = new Array(size);
+			for(var i=0; i<size; i++) {
+			    maze_matrix[i] = new Array(size);
+			    for(var j=0; j<size; j++) {
+			    	maze_matrix[i][j] = 0;
+			    }
+			}
+		}
+
+		function generate_maze(){
+			var x = 0;
+			var y = 0;
+			maze_matrix[x][y] = 1;
+			while(x + 1 < size && y + 1 < size){
+				var d = DIRECTIONS[Math.floor((Math.random()*4))];
+				var dx = d[0];
+				var dy = d[1];
+				if(dx != 0){
+					if(x + dx >= 0){
+						x = x + dx;
+					}
+					else{
+						continue;
+					}
+				}
+				if(dy != 0){
+					if(y + dy >= 0){
+						y = y + dy;
+					}
+					else{
+						continue;
+					}
+				}
+				maze_matrix[x][y] = 1;
+			}
+		}
+
+		function add_borders(r, c){
+			if(maze_matrix[r][c] != 1){
+				return
+			}
+			var $block = $('#r'+r+'c'+c);
+			var top_border = maze_matrix[r-1] != undefined && maze_matrix[r-1][c] == 1 ? '#5FBA50' : '#e96955'
+			var bottom_border = maze_matrix[r+1] != undefined && maze_matrix[r+1][c] == 1 ? '#5FBA50' : '#e96955'
+			var right_border = maze_matrix[r][c+1] == 1 ? '#5FBA50' : '#e96955'
+			var left_border = maze_matrix[r][c-1] == 1 ? '#5FBA50' : '#e96955'
+
+			$block.css('border-left-color', left_border);
+			$block.css('border-right-color', right_border);
+			$block.css('border-top-color', top_border);
+			$block.css('border-bottom-color', bottom_border);
+
+		}
+
+		function build_maze_layout(){
+			$("#maze_layout").css("min-height", size*412+"px");
+			$("#maze_layout").css("min-width", size*412+"px");
+			$("#my_location").css("height", 100/size+"px");
+			$("#my_location").css("width", 100/size+"px");
+			for(var i=0; i<maze_matrix.length; i++){
+				var row = maze_matrix[i];
+				var first_row = true;
+				for(var j=0; j<row.length; j++){
+					$('#maze_layout').append('<div id="r'+i+'c'+j+'" class="maze_block"></div>');
+					add_borders(i, j);
+
+					$('#r'+i+'c'+j).swipe( {
+				        swipe:function(event, direction, distance, duration, fingerCount) {
+							$("#message").text("");
+				        	var id = event.srcElement.id;
+				        	var tmp = id.split('r')[1].split('c');
+						  	var r = parseInt(tmp[0]);
+						  	var c = parseInt(tmp[1]);
+
+						  	var new_r = r;
+						  	var new_c = c;
+						  	var translate;
+						  	var map_translate;
+						  	translate_percent = 100.00 / size;
+
+						  	if(direction == 'left'){
+						  		new_c = c-1;
+						  		translate = "translate(-"+new_c * translate_percent+"%, -"+r * translate_percent+"%)"
+						  		map_translate = "translate("+new_c * 100+"%, "+r * 100+"%)"
+						  		//translate = "translateY("+(r+1) * translate_percent+"%)";
+						  		//translate = "translateX("+(c+1) * +412+"px)";
+						  	}else if(direction == 'right'){
+						  		new_c = c+1;
+						  		translate = "translate(-"+ new_c * translate_percent+"%, -"+r * translate_percent+"%)"
+						  		map_translate = "translate("+ new_c * 100+"%, "+r * 100+"%)"
+						  		//translate = "translateY("+(r+1) * 412+"px)";
+						  		//translate = "translateX("+(c+1) * -412+"px)";
+						  	}else if(direction == 'up'){
+						  		new_r = r-1;
+						  		translate = "translate(-"+c * translate_percent+"%, -"+new_r * translate_percent+"%)"
+						  		map_translate = "translate("+c * 100+"%, "+new_r * 100+"%)"
+						  		//translate = "translateX("+(c+1) * 412+"px)";
+						  		//translate = "translateY("+(r+1) * +412+"px)";
+							}else if(direction == 'down'){
+						  		new_r = r+1;
+						  		translate = "translate(-"+c * translate_percent+"%, -"+new_r * translate_percent+"%)"
+						  		map_translate = "translate("+c * 100+"%, "+new_r * 100+"%)"
+						  		//translate = "translateX("+(c+1) * 412+"px)";
+						  		//translate = "translateY("+(r+1) * -412+"px)";
+						  	}
+						  	console.log(map_translate);
+
+					  		if(maze_matrix[new_r] != undefined && maze_matrix[new_r][new_c] == 1){
+					  			$("#maze_layout").css("transform",translate);
+					  			$("#my_location").css("transform",map_translate);
+					  			//$('#r'+r+'c'+c).hide();
+					  			//$('#r'+new_r+'c'+new_c).show();
+					  		}else{
+					  			$("#message").text("You died, try again")
+					  			$("#maze_layout").css("transform","translate(0%,0%)");
+					  			$("#my_location").css("transform","translate(0%,0%)");
+					  			//$('#r'+r+'c'+c).hide();
+					  			//$('#r0c0').show();
+					  		}
+
+					  		if(new_r+1 == size || new_c+1 == size){
+								$("#message").text("Congrats! You Win!!");
+								$('#r'+new_r+'c'+new_c).addClass("good");
+								$('#r'+new_r+'c'+new_c).text("YOU WIN!");
+							}
+
+				        },
+				         threshold:0
+				      });
+				}
+			}
+
+			$("#r0c0").show();
+			/**$( ".maze_block" ).hover(
+			  function() {
+			  	var id = $(this).context.id;
+			  	var tmp = id.split('r')[1].split('c');
+			  	var x = parseInt(tmp[0]);
+			  	var y = parseInt(tmp[1]);
+			  	if(maze_matrix[x][y] == 1){
+			  		$(this).addClass("good");
+			  	}
+			    else{
+			    	$(this).addClass("bad")
+			    }
+			  }, function() {
+			    $( this ).removeClass( "good" );
+			    $( this ).removeClass( "bad" );
+			  }
+			);*/
+		}
+
+		function show_all(){
+			for(var i=0; i<maze_matrix.length; i++){
+				var row = maze_matrix[i];
+				for(var j=0; j<row.length; j++){
+					var maze_block = maze_matrix[i][j]
+					var $maze_block = $('#r'+i+'c'+j)
+					$maze_block.show();
+					if(maze_block == 1){
+				  		$($maze_block).addClass("good");
+				  	}
+				    else{
+				    	$($maze_block).addClass("bad");
+				    }
+				}
+			}
+		}
+
+		function new_maze(){
+			$("#maze_layout").css("transform","translate(0%,0%)");
+			$("#my_location").css("transform","translate(0%,0%)");
+			$('#maze_layout').empty()
+			initialize_maze();
+			generate_maze();
+			build_maze_layout();
+		}
+
+		function initialize(){
+			/*$('#show_all').click(
+				function(){
+					show_all();
+				});*/
+			$('#new_maze').click(
+				function(){
+					new_maze();
+				});
+			$("#settings").click(
+				function(){
+					$("#settings_modal").toggle();
+				});
+			$("#save_settings").click(
+				function(){
+					size=parseInt($("#size").val());
+					new_maze();
+					$("#settings_modal").toggle();
+				});
+			initialize_maze();
+			generate_maze();
+			build_maze_layout();
+		}
+	</script>
+	</head>
+  <body onload="initialize()">
+  	<div data-role="page" id="pageone" data-theme="a">
+	    <div data-role="header">
+	      <h1>Swype Maze</h1>
+	      <a href="#" class="settings_btn" id="settings">Options</a>
+	    </div>
+	    <div id="settings_modal" class="settings_modal" style="display: none">
+	    	<div data-role="controlgroup" data-type="horizontal">
+		    	<div class="ui-field-contain">
+			        <label for="size">Set Size of Maze</label>
+			        <input type="text" name="size" id="size">
+			        <div id="save_settings" class="ui-btn">Save</div>
+			    </div>
+			</div>
+		</div>
+
+	    <div data-role="main" class="ui-content">
+		  	<div data-role="controlgroup" data-type="horizontal">
+			  	<!--<div id="show_all" class="ui-btn">Show All</div>-->
+			  	<div id="new_maze" class="ui-btn">New Maze</div>
+			  	<div id="message" class="message"></div>
+			  	<div id="map" class="map">
+			  		<img id="my_location" src="img/10x10blue_box.png"/>
+			  	</div>
+			</div>
+		  	<div id="maze_holder">
+		  		<div id="maze_layout">
+		  		</div>
+		  	</div>
+		  </div>
+
+		  <div data-role="footer">
+		    <h1>Gui-on Enterprises</h1>
+		  </div>
+	</div>
+  </body>
+</html>
