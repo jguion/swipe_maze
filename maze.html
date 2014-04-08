@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+  	<title>Swipe Maze</title>
+  	<meta name="viewport" content="width=device-width, initial-scale=0.75"> 
   	<style> 
 	    <!--
 	    body{
@@ -15,10 +17,10 @@
 	    	overflow: hidden;
 	    }
 	    #maze_layout {
-	    	-webkit-transition:all 1.0s ease-in-out;
-		    -moz-transition:all 1.0s ease-in-out;
-			-o-transition:all 1.0s ease-in-out;
-		  	transition:all 1.0s ease-in-out;
+	    	-webkit-transition:all 0.5s ease-in-out;
+		    -moz-transition:all 0.5s ease-in-out;
+			-o-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;
 	    	/*min-height:4120px;
 	    	min-width: 4120px;*/
 	    }
@@ -79,25 +81,30 @@
 	    }
 	    .settings_modal{
 	    	-webkit-transition:all 1.0s ease-in-out;
-		    -moz-transition:all 1.0s ease-in-out;
-			-o-transition:all 1.0s ease-in-out;
 		  	transition:all 1.0s ease-in-out;
+		  	height: 0px !important;
+		  	overflow:hidden;
+	    }
+	    .show{
+	    	height: inherit !important;
 	    }
 	    .map{
-	    	-webkit-transition:all 1.0s ease-in-out;
-		    -moz-transition:all 1.0s ease-in-out;
-			-o-transition:all 1.0s ease-in-out;
-		  	transition:all 1.0s ease-in-out;
+	    	-webkit-transition:all 0.5s ease-in-out;
+		    -moz-transition:all 0.5s ease-in-out;
+			-o-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;
 	    	background-color: #e9e9e9;
 	    	float:right;
 	    	height: 100px;
 	    	width: 100px;
 	    }
 	    .my_location{
-	    	-webkit-transition:all 1.0s ease-in-out;
-		    -moz-transition:all 1.0s ease-in-out;
-			-o-transition:all 1.0s ease-in-out;
-		  	transition:all 1.0s ease-in-out;
+	    	-webkit-transition-property: -webkit-transform;
+	    	-webkit-transform: translate;
+	    	-webkit-transition:all 0.5s ease-in-out;
+		    -moz-transition:all 0.5s ease-in-out;
+			-o-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;
 	    }
 	    -->
 	</style>
@@ -109,8 +116,14 @@
   	<script type="text/javascript">
   		var maze_matrix;
 		var DIRECTIONS = [[0,1], [0,-1], [-1,0], [1,0]];
-		var size = 10;
+		//easy - standard game, easy algorithm, walls are highlighted to tell which direction you can go
+		//blind - walls are not highlighted so you need to navigate the maze based on memory
+		//zombie - zombies are on your tail, you cannot backtrack or you will die
+		var MODES = ['easy', 'blind', 'zombies']
+		var size = 15;
 		var translate_percent = 100.00 / size;
+		var mode = $("input[type='radio'][name='radio_mode']:checked").val();
+		var last_direction;
 
 		function initialize_maze(){
 			maze_matrix = new Array(size);
@@ -164,7 +177,14 @@
 			$block.css('border-right-color', right_border);
 			$block.css('border-top-color', top_border);
 			$block.css('border-bottom-color', bottom_border);
+		}
 
+		function is_caught_by_zombies(direction, last_direction){
+			var opposite_direction = {'right':'left',
+									  'left':'right',
+									  'up':'down',
+									  'down':'up'}
+			return opposite_direction[direction] == last_direction;
 		}
 
 		function build_maze_layout(){
@@ -177,7 +197,9 @@
 				var first_row = true;
 				for(var j=0; j<row.length; j++){
 					$('#maze_layout').append('<div id="r'+i+'c'+j+'" class="maze_block"></div>');
-					add_borders(i, j);
+					if(mode != "blind"){
+						add_borders(i, j);
+					}
 
 					$('#r'+i+'c'+j).swipe( {
 				        swipe:function(event, direction, distance, duration, fingerCount) {
@@ -193,44 +215,42 @@
 						  	var map_translate;
 						  	translate_percent = 100.00 / size;
 
-						  	if(direction == 'left'){
+						  	if(direction == 'right'){
 						  		new_c = c-1;
 						  		translate = "translate(-"+new_c * translate_percent+"%, -"+r * translate_percent+"%)"
 						  		map_translate = "translate("+new_c * 100+"%, "+r * 100+"%)"
-						  		//translate = "translateY("+(r+1) * translate_percent+"%)";
-						  		//translate = "translateX("+(c+1) * +412+"px)";
-						  	}else if(direction == 'right'){
+						  	}else if(direction == 'left'){
 						  		new_c = c+1;
 						  		translate = "translate(-"+ new_c * translate_percent+"%, -"+r * translate_percent+"%)"
 						  		map_translate = "translate("+ new_c * 100+"%, "+r * 100+"%)"
-						  		//translate = "translateY("+(r+1) * 412+"px)";
-						  		//translate = "translateX("+(c+1) * -412+"px)";
-						  	}else if(direction == 'up'){
+						  	}else if(direction == 'down'){
 						  		new_r = r-1;
 						  		translate = "translate(-"+c * translate_percent+"%, -"+new_r * translate_percent+"%)"
 						  		map_translate = "translate("+c * 100+"%, "+new_r * 100+"%)"
-						  		//translate = "translateX("+(c+1) * 412+"px)";
-						  		//translate = "translateY("+(r+1) * +412+"px)";
-							}else if(direction == 'down'){
+							}else if(direction == 'up'){
 						  		new_r = r+1;
 						  		translate = "translate(-"+c * translate_percent+"%, -"+new_r * translate_percent+"%)"
 						  		map_translate = "translate("+c * 100+"%, "+new_r * 100+"%)"
-						  		//translate = "translateX("+(c+1) * 412+"px)";
-						  		//translate = "translateY("+(r+1) * -412+"px)";
 						  	}
-						  	console.log(map_translate);
 
-					  		if(maze_matrix[new_r] != undefined && maze_matrix[new_r][new_c] == 1){
+						  	var dead = false
+						  	if(mode == 'zombies'){
+						  		dead = is_caught_by_zombies(direction, last_direction);
+						  	}
+
+					  		if(!dead && maze_matrix[new_r] != undefined && maze_matrix[new_r][new_c] == 1){
 					  			$("#maze_layout").css("transform",translate);
 					  			$("#my_location").css("transform",map_translate);
-					  			//$('#r'+r+'c'+c).hide();
-					  			//$('#r'+new_r+'c'+new_c).show();
+					  			last_direction = direction;
 					  		}else{
-					  			$("#message").text("You died, try again")
+					  			if(mode == 'zombies' && dead){
+					  				$("#message").text("You were caught by zombies, try again");
+					  			}else{
+					  			$("#message").text("You ran into a wall, try again");
+					  			}
 					  			$("#maze_layout").css("transform","translate(0%,0%)");
 					  			$("#my_location").css("transform","translate(0%,0%)");
-					  			//$('#r'+r+'c'+c).hide();
-					  			//$('#r0c0').show();
+					  			last_direction = undefined;
 					  		}
 
 					  		if(new_r+1 == size || new_c+1 == size){
@@ -302,14 +322,16 @@
 				});
 			$("#settings").click(
 				function(){
-					$("#settings_modal").toggle();
+					$("#settings_modal").toggleClass("show");
 				});
 			$("#save_settings").click(
 				function(){
 					size=parseInt($("#size").val());
+					mode = $("input[type='radio'][name='radio_mode']:checked").val();
 					new_maze();
 					$("#settings_modal").toggle();
 				});
+			$('#size').val(size);
 			initialize_maze();
 			generate_maze();
 			build_maze_layout();
@@ -319,20 +341,32 @@
   <body onload="initialize()">
   	<div data-role="page" id="pageone" data-theme="a">
 	    <div data-role="header">
-	      <h1>Swype Maze</h1>
-	      <a href="#" class="settings_btn" id="settings">Options</a>
+	      <h1>Swipe Maze</h1>
+	      <a href="#" class="settings_btn" id="settings">Settings</a>
 	    </div>
-	    <div id="settings_modal" class="settings_modal" style="display: none">
+	    <div id="settings_modal" class="settings_modal">
 	    	<div data-role="controlgroup" data-type="horizontal">
 		    	<div class="ui-field-contain">
 			        <label for="size">Set Size of Maze</label>
 			        <input type="text" name="size" id="size">
-			        <div id="save_settings" class="ui-btn">Save</div>
 			    </div>
+			    <fieldset data-role="controlgroup" data-type="horizontal" data-role="fieldcontain">
+			    	<legend>Choose a mode:</legend>
+		         	<input type="radio" name="radio_mode" id="radio-choice-easy" value="easy" checked="checked" />
+		         	<label for="radio-choice-easy">Easy</label>
+
+		         	<input type="radio" name="radio_mode" id="radio-choice-blind" value="blind"  />
+		         	<label for="radio-choice-blind">Blind</label>
+
+		         	<input type="radio" name="radio_mode" id="radio-choice-zombies" value="zombies"  />
+		         	<label for="radio-choice-zombies">Zombies</label>
+			 	</fieldset>
+			    <div id="save_settings" class="ui-btn">Save</div>
 			</div>
 		</div>
 
 	    <div data-role="main" class="ui-content">
+	    	<div> Navigate through the maze by moving through green walls (Swipe away to move towards). If you hit a red wall, you will go back to the beginning. To change the size of the maze, click the settings button. </div>
 		  	<div data-role="controlgroup" data-type="horizontal">
 			  	<!--<div id="show_all" class="ui-btn">Show All</div>-->
 			  	<div id="new_maze" class="ui-btn">New Maze</div>
