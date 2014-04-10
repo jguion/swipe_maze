@@ -21,13 +21,8 @@
 		    -moz-transition:all 0.5s ease-in-out;
 			-o-transition:all 0.5s ease-in-out;
 		  	transition:all 0.5s ease-in-out;
-	    	/*min-height:4120px;
-	    	min-width: 4120px;*/
 	    }
 	    .maze_block {
-	    	/**-webkit-transition-duration: 0.3s;
-	    	-webkit-transition-property: -webkit-transform;
-	    	-webkit-transform: translateZ(0);*/
 	    	background-color:#333;
 	    	border:6px solid #e1e1e1;
 	    	display: block;
@@ -36,9 +31,6 @@
 	    	margin:0;
 	    	padding:0;
 	    	width:400px;
-			/*transition-property: all;
-			transition-duration: .5s;
-			transition-timing-function: cubic-bezier(0, 1, 0.5, 1);*/
 	    }
 	    /*.maze_block:hover{
 	    	-webkit-transform: scale(1.05);
@@ -79,13 +71,28 @@
 	    .settings_btn{
 	    	float:right;
 	    }
+	    .settings_modal,.main{
+	    	-webkit-backface-visibility: hidden;
+	    	position: absolute;
+			top: 0;
+	    } 
 	    .settings_modal{
-	    	-webkit-transition:all 0.5s ease-in-out;
-		  	transition:all 0.5s ease-in-out;
-		  	margin-left: 20px;
-		  	max-height: 0px !important;
+	    	/*-webkit-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;*/
+		  	-webkit-transform: rotateY(180deg);
+
+		  	margin-right: 20px;
+		  	/*max-height: 0px !important;*/
 		  	overflow:hidden;
+			right: 0;
+
 	    }
+	    .main{
+
+			left: 0;
+			z-index: 2;
+	    }
+
 	    .show{
 	    	max-height: 300px !important;
 	    }
@@ -107,11 +114,31 @@
 			-o-transition:all 0.5s ease-in-out;
 		  	transition:all 0.5s ease-in-out;
 	    }
+
+	    #pageone{
+	    	-webkit-perspective: 800px;
+	    	-webkit-transition: 0.6s;
+			-webkit-transform-style: preserve-3d;
+	    }
+
+	    #flipper{
+	    	-webkit-transition: 0.6s;
+			-webkit-transform-style: preserve-3d;
+	    	border:1px solid #e1e1e1;
+	    	height: 650px;
+	    }
+
+	    #flipper.flipped {
+			-webkit-transform: rotateY(180deg);
+
+
+			position: relative;
+		}
 	    -->
 	</style>
   	<!--<script type='text/javascript' src="http://code.jquery.com/jquery-1.9.1.min.js"></script>-->
   	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css">
-  	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  	<script type='text/javascript' src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
   	<script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
   	<script type='text/javascript' src="plugins/jquery.touchSwipe.min.js"></script>
   	<script type="text/javascript">
@@ -152,13 +179,6 @@
 					var $maze_block = $('#r'+i+'c'+j);
 					$maze_block.css('height', '75px');
 					$maze_block.css('width', '75px');
-
-					//if(maze_block == 1){
-				  	//	$($maze_block).addClass("good");
-				  	//}
-				    //else{
-				    //	$($maze_block).addClass("bad");
-				    //}
 				}
 			}
 
@@ -502,9 +522,10 @@
 				function(){
 					new_maze();
 				});
-			$("#settings").click(
-				function(){
-					$("#settings_modal").toggleClass("show");
+
+			$('#settings').click(
+				function () {
+					$("#flipper").toggleClass("flipped")
 				});
 			$("#save_settings").click(
 				function(){
@@ -512,31 +533,35 @@
 					mode = $("input[type='radio'][name='radio_mode']:checked").val();
 					algorithm = $("input[type='radio'][name='radio_algorithm']:checked").val();
 					new_maze();
-					$("#settings_modal").toggleClass("show");
+					$("#flipper").toggleClass("flipped")
 				});
-			$('#size').val(size);
-			var mode = $("input[type='radio'][name='radio_mode']:checked").val();
-			var algorithm = $("input[type='radio'][name='radio_algorithm']:checked").val();
 			new_maze();
-			//initialize_maze();
-			//generate_maze();
-			//build_maze_layout();
 		}
+	$(function(){
+		$('#size').val(size);
+		mode = $("input[type='radio'][name='radio_mode']:checked").val();
+		algorithm = $("input[type='radio'][name='radio_algorithm']:checked").val();
+
+	})
 	</script>
 	</head>
-  <body onload="initialize()">
+  <body onload="initialize()" class="ui-mobile-viewpoint">
   	<div data-role="page" id="pageone" data-theme="a">
 	    <div data-role="header">
 	      <h1>Swipe Maze</h1>
 	      <a href="#" class="settings_btn" id="settings">Settings</a>
 	    </div>
-	    <div id="settings_modal" class="settings_modal">
+
+	    <div id="flipper">
+	    <div id="settings_modal" class="ui-content settings_modal">
 	    	<div data-role="controlgroup" data-type="horizontal">
-		    	<div class="ui-field-contain">
+		    	<!--<div class="field-contain">
 			        <label for="size">Set Size of Maze</label>
 			        <input type="text" name="size" id="size">
-			    </div>
+			    </div>-->
 			    <fieldset data-role="controlgroup" data-type="horizontal" data-role="fieldcontain">
+			    	<label for="size">Maze Size:</label>
+			    	<input type="range" name="size" id="size" min="0" max="100" value="20" data-highlight="true">
 			    	<legend>Choose maze algorithm:</legend>
 		         	<input type="radio" name="radio_algorithm" id="radio_algorithm_simple" value="simple" />
 		         	<label for="radio_algorithm_simple">Simple</label>
@@ -554,11 +579,12 @@
 		         	<input type="radio" name="radio_mode" id="radio-choice-zombies" value="zombies"  />
 		         	<label for="radio-choice-zombies">Zombies</label>
 			 	</fieldset>
+
 			    <div id="save_settings" class="ui-btn">Save</div>
 			</div>
 		</div>
 
-	    <div data-role="main" class="ui-content">
+	    <div data-role="main" class="ui-content main">
 	    	<div> Navigate through the maze by moving through green walls (Swipe away to move towards). If you hit a red wall, you will go back to the beginning. To win, reach one of the edges on the right or bottom. To change the size of the maze or other maze options, click the settings button. </div>
 		  	<div data-role="controlgroup" data-type="horizontal">
 			  	<!--<div id="show_all" class="ui-btn">Show All</div>-->
@@ -573,10 +599,10 @@
 		  		</div>
 		  	</div>
 		  </div>
-
-		  <div data-role="footer">
-		    <h1>Gui-on</h1>
-		  </div>
+		</div>
+		<div data-role="footer">
+		   <h1>Gui-on</h1>
+		</div>
 	</div>
   </body>
 </html>
