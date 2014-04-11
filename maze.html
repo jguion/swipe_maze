@@ -12,8 +12,6 @@
 	    #maze_holder {
 	    	float:left;
 	    	margin:0 auto;
-	    	max-height:412px;
-	    	max-width: 412px;
 	    	overflow: hidden;
 	    }
 	    #maze_layout {
@@ -27,14 +25,9 @@
 	    	border:6px solid #e1e1e1;
 	    	display: block;
 	    	float:left;
-	    	height:400px;
 	    	margin:0;
 	    	padding:0;
-	    	width:400px;
 	    }
-	    /*.maze_block:hover{
-	    	-webkit-transform: scale(1.05);
-	    }*/
       	.maze_block.good{
     		background-color:#5FBA50;
     	}
@@ -73,6 +66,7 @@
 	    }
 	    .settings_modal,.main{
 	    	-webkit-backface-visibility: hidden;
+	    	backface-visibility: hidden;
 	    	position: absolute;
 			top: 0;
 	    } 
@@ -119,13 +113,14 @@
 	    	-webkit-perspective: 800px;
 	    	-webkit-transition: 0.6s;
 			-webkit-transform-style: preserve-3d;
+			-webkit-overflow-scrolling: touch; 
+			border:2px solid #e1e1e1;
 	    }
 
 	    #flipper{
 	    	-webkit-transition: 0.6s;
 			-webkit-transform-style: preserve-3d;
-	    	border:1px solid #e1e1e1;
-	    	height: 650px;
+	    	border:2px solid #e1e1e1;
 	    }
 
 	    #flipper.flipped {
@@ -134,12 +129,21 @@
 
 			position: relative;
 		}
+		[data-role=page]{
+			height: 100% !important; 
+			position:relative !important;
+		}
+		[data-role=footer]{
+			bottom:-45px; 
+			position:absolute !important; 
+			top: auto !important; 
+			width:100%;
+		}  
 	    -->
 	</style>
-  	<!--<script type='text/javascript' src="http://code.jquery.com/jquery-1.9.1.min.js"></script>-->
-  	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css">
-  	<script type='text/javascript' src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
-  	<script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+  	<link rel="stylesheet" href="plugins/jquery.mobile-1.4.2.min.css">
+  	<script type='text/javascript' src="plugins/jquery-2.1.0.min.js"></script>
+  	<script src="plugins/jquery.mobile-1.4.2.min.js"></script>
   	<script type='text/javascript' src="plugins/jquery.touchSwipe.min.js"></script>
   	<script type="text/javascript">
   		var maze_matrix;
@@ -150,6 +154,7 @@
 		var MODES = ['easy', 'blind', 'zombies'];
 		var ALGORITHMS = ['simple', 'advanced'];
 		var size = 15;
+		var maze_block_size = 400;
 		var translate_percent = 100.00 / size;
 		var mode = 'easy';
 		var algorithm = 'advanced';
@@ -472,10 +477,6 @@
 		**/
 
 		function build_maze_layout(){
-			$("#maze_layout").css("min-height", size*412+"px");
-			$("#maze_layout").css("min-width", size*412+"px");
-			$("#my_location").css("height", 100/size+"px");
-			$("#my_location").css("width", 100/size+"px");
 			for(var i=0; i<maze_matrix.length; i++){
 				var row = maze_matrix[i];
 				var first_row = true;
@@ -498,7 +499,14 @@
 				}
 			}
 
-			$("#r0c0").show();
+			$("#maze_holder").css("max-height", maze_block_size+12+"px");
+			$("#maze_holder").css("max-width", maze_block_size+12+"px");
+			$(".maze_block").css("min-height", maze_block_size+"px");
+			$(".maze_block").css("min-width", maze_block_size+"px");
+			$("#maze_layout").css("min-height", size*(maze_block_size+12)+"px");
+			$("#maze_layout").css("min-width", size*(maze_block_size+12)+"px");
+			$("#my_location").css("height", 100/size+"px");
+			$("#my_location").css("width", 100/size+"px");
 		}
 
 		function new_maze(){
@@ -530,6 +538,7 @@
 			$("#save_settings").click(
 				function(){
 					size=parseInt($("#size").val());
+					maze_block_size=parseInt($("#block_pixels").val());
 					mode = $("input[type='radio'][name='radio_mode']:checked").val();
 					algorithm = $("input[type='radio'][name='radio_algorithm']:checked").val();
 					new_maze();
@@ -539,12 +548,24 @@
 		}
 	$(function(){
 		$('#size').val(size);
+		$("#block_pixels").val(maze_block_size);
 		mode = $("input[type='radio'][name='radio_mode']:checked").val();
 		algorithm = $("input[type='radio'][name='radio_algorithm']:checked").val();
 
 	})
 	</script>
-	</head>
+	<script>
+  	  //Google Analytics Tracker
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	  ga('create', 'UA-49944213-1', 'guion.us');
+	  ga('send', 'pageview');
+
+	</script>
+  </head>
   <body onload="initialize()" class="ui-mobile-viewpoint">
   	<div data-role="page" id="pageone" data-theme="a">
 	    <div data-role="header">
@@ -555,13 +576,15 @@
 	    <div id="flipper">
 	    <div id="settings_modal" class="ui-content settings_modal">
 	    	<div data-role="controlgroup" data-type="horizontal">
-		    	<!--<div class="field-contain">
-			        <label for="size">Set Size of Maze</label>
-			        <input type="text" name="size" id="size">
-			    </div>-->
-			    <fieldset data-role="controlgroup" data-type="horizontal" data-role="fieldcontain">
-			    	<label for="size">Maze Size:</label>
-			    	<input type="range" name="size" id="size" min="0" max="100" value="20" data-highlight="true">
+		    	<div class="field-contain">
+		    		<label for="size">Maze size (Number of blocks each direction):</label>
+		    		<input type="range" name="size" id="size" min="0" max="100" value="20" data-highlight="true">
+		    	</div>
+		    	<div class="field-contain">
+		    		<label for="block_pixels">Set size of each block (pixels)</label>
+		        	<input type="text" name="block_pixels" id="block_pixels">
+		        </div>
+			  	<fieldset data-role="controlgroup" data-type="horizontal" data-role="fieldcontain">
 			    	<legend>Choose maze algorithm:</legend>
 		         	<input type="radio" name="radio_algorithm" id="radio_algorithm_simple" value="simple" />
 		         	<label for="radio_algorithm_simple">Simple</label>
