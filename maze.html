@@ -240,7 +240,7 @@
 					if(visited[neighbor_x][neighbor_y] == 1){
 						continue;
 					}else{
-						var steps =  bfs(neighbor_x, neighbor_y, endX, endY)
+						var steps =  shortest_path(neighbor_x, neighbor_y, endX, endY)
 						if(steps && steps > 0){
 							return 1 + steps;
 						}else{
