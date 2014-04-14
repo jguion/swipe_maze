@@ -25,8 +25,11 @@
 	    	border:6px solid #e1e1e1;
 	    	display: block;
 	    	float:left;
+	    	font-size: 35px;
 	    	margin:0;
 	    	padding:0;
+	    	text-align: center;
+			text-shadow: 0 1px 0 #333;
 	    }
       	.maze_block.good{
     		background-color:#5FBA50;
@@ -59,7 +62,11 @@
 	    }
 	    .message{
 	    	float:left;
-	    	padding: 12px;
+	    	max-width: 275px;
+	    	padding: 10px;
+	    }
+	    #maze_timer{
+	    	padding-bottom: 10px;
 	    }
 	    .settings_btn{
 	    	float:right;
@@ -147,6 +154,7 @@
   	<script type='text/javascript' src="plugins/jquery-2.1.0.min.js"></script>
   	<script src="plugins/jquery.mobile-1.4.2.min.js"></script>
   	<script type='text/javascript' src="plugins/jquery.touchSwipe.min.js"></script>
+  	<script type='text/javascript' src="plugins/jquery.timer.js"></script>
   	<script type="text/javascript">
   		var maze_matrix; 
 		var DIRECTIONS = [[0,1], [0,-1], [-1,0], [1,0]];
@@ -162,7 +170,10 @@
 		var algorithm = 'advanced';
 		var last_direction;
 		var num_swipes = 0;
+		var min_swipes;
 		var visited;
+		var max_score = 0;
+		var num_deaths = 0;
 
 
 		/**
@@ -256,47 +267,86 @@
 			return shortest_path(0, 0, endX, endY, visited);
 		}
 
-		/*function bfs(startX, startY, endX, endY, grid) {
-		    var openList = []
-		   	var startNode = maze_matrix[startX][startY]
-		   	var endNode = maze_matrix[endX][endY],
-		   	var neighbors, neighbor, node, i, l;
+		function format_timer(ms){
+			var x = ms / 1000
+			var seconds = x % 60
+			x = Math.floor(x / 60)
+			var minutes = x % 60
 
-		    // push the start pos into the queue
-		    openList.push(startNode);
-		    startNode.opened = true;
+			return minutes + " minutes "+ seconds+" seconds"
+		}
 
-		    // while the queue is not empty
-		    while (openList.length) {
-		        // take the front node from the queue
-		        node = openList.shift();
-		        node.closed = true;
+		var MazeTimer = new(function() {
 
-		        // reached the end position
-		        if (node === endNode) {
-		            return Util.backtrace(endNode);
-		        }
+		    // Stopwatch element on the page
+		    var $maze_timer;
 
-		        neighbors = grid.getNeighbors(node, allowDiagonal, dontCrossCorners);
-		        for (i = 0, l = neighbors.length; i < l; ++i) {
-		            neighbor = neighbors[i];
+		    // Timer speed in milliseconds
+		    var incrementTime = 1000;
 
-		            // skip this neighbor if it has been inspected before
-		            if (neighbor.closed || neighbor.opened) {
-		                continue;
-		            }
+		    // Current timer position in milliseconds
+		    var currentTime = 0;
 
-		            openList.push(neighbor);
-		            neighbor.opened = true;
-		            neighbor.parent = node;
-		        }
+		    // Start the timer
+		    $(function() {
+		        $maze_timer = $('#maze_timer');
+		        MazeTimer.Timer = $.timer(updateTimer, incrementTime, true);
+		    });
+
+		    this.currentTime = function(){
+		    	return currentTime
 		    }
-		    
-		    // fail to find the path
-		    return [];
-		};
+
+		    // Output time and increment
+		    function updateTimer() {
+		        var timeString = format_timer(currentTime);
+		        $maze_timer.html(timeString);
+		        currentTime += incrementTime;
+		    }
+
+		    // Reset timer
+		    this.resetStopwatch = function() {
+		        currentTime = 0;
+		        MazeTimer.Timer.stop().once();
+		    };
+
+		});
+
+		/*
+			Score should be calculated on a number of factors including time and number of swipes
+			** Possibly add in difficulty multiplier
+			Max points = 1000
+			Max points = (Swipe Score(up to 500) + Time score (up to 500)) * Multipliers
+			Swipe Score
+			- Perfect = Max points
+			- Double = Half points
+			- Triple = Quarter points
+
+			Time Score
+			- # seconds <= Min swipes = Max Points
+			- # seconds * 2 <= Min swipes = Half points
+			- # seconds *3 <= Min swipes = Quarter points
+
+			Multipliers
+			- For each death, subtract 5% of score
+			- Multiplier size of maze / 10 * total score 
+
+
 
 		*/
+		function calculate_score(){
+			var time = MazeTimer.currentTime() / 1000;
+			var swipe_score = min_swipes / num_swipes * 500;
+			var time_score = time / num_swipes * 500;
+			var total_score = swipe_score + time_score;
+			var death_multiplier = 0.05 * num_deaths;
+			death_multiplier = 1-death_multiplier;
+			total_score = total_score * death_multiplier;
+			var size_multiplier = size / 10;
+			total_score = total_score * size_multiplier;
+			return Math.floor(total_score);
+		}
+
 		/**
 		**********				   		* *
 		ADVANCED MAZE ALGORITHMS	    * *
@@ -436,13 +486,21 @@
 	  			$("#maze_layout").css("transform","translate(0%,0%)");
 	  			$("#my_location").css("transform","translate(0%,0%)");
 	  			last_direction = undefined;
+	  			num_deaths+=1;
 	  		}
 
 	  		if(new_r+1 == size || new_c+1 == size){
-	  			var sp = shortest_path_length(new_c, new_r);
-				$("#message").text("Congrats! You Win!! It took "+num_swipes+" swipes to finish. Shortest path was "+sp+" swipes");
+	  			MazeTimer.Timer.toggle();
+	  			min_swipes = shortest_path_length(new_c, new_r);
+	  			var score = calculate_score();
+	  			if(score > max_score){
+	  				max_score = score;
+	  			}
+				$("#message").text("Congrats! You Win!! It took "+num_swipes+" swipes to finish. Shortest path was "+min_swipes+" swipes");
 				$('#r'+new_r+'c'+new_c).addClass("good");
-				$('#r'+new_r+'c'+new_c).text("YOU WIN!");
+				$('#r'+new_r+'c'+new_c).html("<p>YOU WIN!"+
+											 "<br/> Your score is "+score+
+											 "<br/> Max score is "+max_score+"</p>");
 			}
 
         }
@@ -619,6 +677,9 @@
 				create_simple_maze_matrix();
 			}
 			build_maze_layout();
+			MazeTimer.resetStopwatch();
+			MazeTimer.Timer.toggle();
+			num_deaths = 0;
 		}
 
 		function initialize(){
@@ -715,7 +776,10 @@
 			  	<div id="map" class="map">
 			  		<img id="my_location" src="img/10x10blue_box.png"/>
 			  	</div>
-			  	<div id="message" class="message"></div>
+			  	<div class="message">
+				  	<div id="maze_timer"></div>
+				  	<div id="message"></div>
+				</div>
 			</div>
 		  	<div id="maze_holder">
 		  		<div id="maze_layout">
