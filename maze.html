@@ -68,6 +68,10 @@
 	    #maze_timer{
 	    	padding-bottom: 10px;
 	    }
+	    #countdown_timer{
+	    	display: none;
+	    	padding-bottom: 10px;
+	    }
 	    .settings_btn{
 	    	float:right;
 	    }
@@ -118,6 +122,17 @@
 		  	float:left;
 	    }
 
+	    .map_poi{
+	    	-webkit-transition-property: -webkit-transform;
+	    	-webkit-transform: translate;
+	    	-webkit-transition:all 0.5s ease-in-out;
+		    -moz-transition:all 0.5s ease-in-out;
+			-o-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;
+		  	background-color: yellow;
+		  	display: none;
+	    }
+
 	    #pageone{
 	    	-webkit-perspective: 800px;
 	    	-webkit-transition: 0.6s;
@@ -125,7 +140,17 @@
 			-webkit-overflow-scrolling: touch; 
 			border:2px solid #e1e1e1;
 	    }
-
+	    #zombies{
+	    	-webkit-transform: rotateY(180deg);
+	    	background-image:url('img/zombie-banner.jpg');
+			height: 50px;
+			width: 412px;
+	    }
+	    .more_time{
+	    	background-image:url('img/Clock.gif');
+	    	background-size:100px 100px;
+			background-repeat:no-repeat;
+	    }
 	    #flipper{
 	    	-webkit-transition: 0.6s;
 			-webkit-transform-style: preserve-3d;
@@ -174,6 +199,8 @@
 		var visited;
 		var max_score = 0;
 		var num_deaths = 0;
+		var more_time_location=[0,0];
+		var disable_swipe = false;
 
 
 		/**
@@ -277,37 +304,58 @@
 		}
 
 		var MazeTimer = new(function() {
-
-		    // Stopwatch element on the page
 		    var $maze_timer;
-
-		    // Timer speed in milliseconds
 		    var incrementTime = 1000;
-
-		    // Current timer position in milliseconds
 		    var currentTime = 0;
 
-		    // Start the timer
 		    $(function() {
 		        $maze_timer = $('#maze_timer');
 		        MazeTimer.Timer = $.timer(updateTimer, incrementTime, true);
 		    });
-
 		    this.currentTime = function(){
-		    	return currentTime
+		    	return currentTime;
 		    }
-
-		    // Output time and increment
 		    function updateTimer() {
 		        var timeString = format_timer(currentTime);
 		        $maze_timer.html(timeString);
 		        currentTime += incrementTime;
 		    }
-
-		    // Reset timer
 		    this.resetStopwatch = function() {
-		        currentTime = 0;
 		        MazeTimer.Timer.stop().once();
+		    };
+
+		});
+
+		var CountdownTimer = new(function() {
+		    var $countdown_timer;
+		    var incrementTime = 1000;
+		    var currentTime = 60000;
+
+		    this.startCountdownTimer = function(){
+		    	$countdown_timer = $('#countdown_timer');
+		        CountdownTimer.Timer = $.timer(updateTimer, incrementTime, true);
+		    }
+		    this.currentTime = function(){
+		    	return currentTime;
+		    }
+		    this.setCurrentTime = function(current_time){
+		    	currentTime = current_time;
+		    }
+		    function updateTimer() {
+		        var timeString = format_timer(currentTime);
+		        $countdown_timer.html(timeString);
+		        currentTime -= incrementTime;
+		        if(currentTime <= 0){
+		        	var score = format_timer(MazeTimer.currentTime());
+		        	CountdownTimer.Timer.stop();
+		        	alert("You ran out of time. Total time is "+score);
+		        	disable_swipe = true;
+		        	//this.resetStopwatch();
+		        }
+		    }
+		    this.resetStopwatch = function() {
+		    	currentTime = 60000;
+		        CountdownTimer.Timer.stop().once();
 		    };
 
 		});
@@ -428,7 +476,26 @@
 			$block.css('border-bottom-color', bottom_border);
 		}
 
+		function add_more_time(){
+			$(".maze_block").removeClass("more_time");
+			$(".map_poi").show();
+			var $block = $('#r'+more_time_location[0]+'c'+more_time_location[1]);
+			$block.addClass("more_time");
+
+			var r = Math.floor((Math.random()*size));
+			var c = Math.floor((Math.random()*size));
+
+			more_time_location = [r,c];
+
+			var map_translate = "translate("+c * 100+"%, "+r * 100+"%)";
+			$(".map_poi").css("transform",map_translate);
+
+		}
+
 		function advanced_swipe(event, direction, distance, duration, fingerCount) {
+			if(disable_swipe){
+				return false;
+			}
 			$("#message").text("");
         	var id = event.srcElement.id;
         	var tmp = id.split('r')[1].split('c');
@@ -487,9 +554,10 @@
 	  			$("#my_location").css("transform","translate(0%,0%)");
 	  			last_direction = undefined;
 	  			num_deaths+=1;
+	  			CountdownTimer.setCurrentTime(CountdownTimer.currentTime() - 10000);
 	  		}
 
-	  		if(new_r+1 == size || new_c+1 == size){
+	  		if(mode != "scavenger_hunt" && (new_r+1 == size || new_c+1 == size)){
 	  			MazeTimer.Timer.toggle();
 	  			min_swipes = shortest_path_length(new_c, new_r);
 	  			var score = calculate_score();
@@ -501,6 +569,16 @@
 				$('#r'+new_r+'c'+new_c).html("<p>YOU WIN!"+
 											 "<br/> Your score is "+score+
 											 "<br/> Max score is "+max_score+"</p>");
+				disable_swipe = true;
+			}else if(mode == "scavenger_hunt"){
+				more_time_r = more_time_location[0];
+				more_time_c = more_time_location[1];
+				if(new_r == more_time_r && new_c == more_time_c){
+					var more_time = Math.floor((Math.random()*30))*1000 + 30000;
+					CountdownTimer.setCurrentTime(more_time + CountdownTimer.currentTime());
+					add_more_time();
+				}
+				
 			}
 
         }
@@ -656,6 +734,10 @@
 				}
 			}
 
+			if(mode == "scavenger_hunt"){
+				add_more_time();
+			}
+
 			$("#maze_holder").css("max-height", maze_block_size+12+"px");
 			$("#maze_holder").css("max-width", maze_block_size+12+"px");
 			$(".maze_block").css("min-height", maze_block_size+"px");
@@ -664,6 +746,8 @@
 			$("#maze_layout").css("min-width", size*(maze_block_size+12)+"px");
 			$("#my_location").css("height", 100/size+"px");
 			$("#my_location").css("width", 100/size+"px");
+			$(".map_poi").css("height", 100/size+"px");
+			$(".map_poi").css("width", 100/size+"px");
 		}
 
 		function new_maze(){
@@ -679,7 +763,15 @@
 			build_maze_layout();
 			MazeTimer.resetStopwatch();
 			MazeTimer.Timer.toggle();
+			if(mode == "scavenger_hunt"){
+				CountdownTimer.startCountdownTimer()
+				$("#maze_timer").hide();
+				$("#countdown_timer").show();
+				CountdownTimer.resetStopwatch();
+				CountdownTimer.Timer.toggle();
+			}
 			num_deaths = 0;
+			disable_swipe = false;
 		}
 
 		function initialize(){
@@ -762,6 +854,9 @@
 
 		         	<input type="radio" name="radio_mode" id="radio-choice-zombies" value="zombies"  />
 		         	<label for="radio-choice-zombies">Zombies</label>
+
+		         	<input type="radio" name="radio_mode" id="radio-choice-scavenger-hunt" value="scavenger_hunt"  />
+		         	<label for="radio-choice-scavenger-hunt">Scavenger Hunt</label>
 			 	</fieldset>
 
 			    <div id="save_settings" class="ui-btn">Save</div>
@@ -775,9 +870,11 @@
 			  	<div id="new_maze" class="ui-btn">New Maze</div>
 			  	<div id="map" class="map">
 			  		<img id="my_location" src="img/10x10blue_box.png"/>
+			  		<div class="map_poi"></div>
 			  	</div>
 			  	<div class="message">
 				  	<div id="maze_timer"></div>
+				  	<div id="countdown_timer"></div>
 				  	<div id="message"></div>
 				</div>
 			</div>
