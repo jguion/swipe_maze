@@ -97,6 +97,14 @@
 			left: 0;
 			z-index: 2;
 	    }
+	    .instructions{
+	    	-webkit-transition:all 0.5s ease-in-out;
+		    -moz-transition:all 0.5s ease-in-out;
+			-o-transition:all 0.5s ease-in-out;
+		  	transition:all 0.5s ease-in-out;
+	    	max-height: 0px !important;
+	    	overflow: hidden;
+	    }
 
 	    .show{
 	    	max-height: 300px !important;
@@ -107,6 +115,7 @@
 			-o-transition:all 0.5s ease-in-out;
 		  	transition:all 0.5s ease-in-out;
 	    	background-color: #e9e9e9;
+	    	border 3px solid rgb(233, 105, 85);
 	    	float:left;
 	    	height: 100px;
 	    	margin: 0px 10px;
@@ -119,7 +128,10 @@
 		    -moz-transition:all 0.5s ease-in-out;
 			-o-transition:all 0.5s ease-in-out;
 		  	transition:all 0.5s ease-in-out;
+		  	background-color: rgb(95, 186, 80);
+		  	border-radius: 50%;
 		  	float:left;
+
 	    }
 
 	    .map_poi{
@@ -129,7 +141,8 @@
 		    -moz-transition:all 0.5s ease-in-out;
 			-o-transition:all 0.5s ease-in-out;
 		  	transition:all 0.5s ease-in-out;
-		  	background-color: yellow;
+		  	background-color: gold;
+		  	border-radius: 50%;`
 		  	display: none;
 	    }
 
@@ -154,7 +167,7 @@
 	    #flipper{
 	    	-webkit-transition: 0.6s;
 			-webkit-transform-style: preserve-3d;
-	    	border:2px solid #e1e1e1;
+	    	border:2px solid #1b1b1b;
 	    }
 
 	    #flipper.flipped {
@@ -295,6 +308,9 @@
 		}
 
 		function format_timer(ms){
+			if(x < 0){
+				return "0 seconds";
+			}
 			var x = ms / 1000
 			var seconds = x % 60
 			x = Math.floor(x / 60)
@@ -348,9 +364,10 @@
 		        if(currentTime <= 0){
 		        	var score = format_timer(MazeTimer.currentTime());
 		        	CountdownTimer.Timer.stop();
-		        	alert("You ran out of time. Total time is "+score);
+		        	$("#popup_msg").html("<p>You ran out of time. Total time is "+score+"<p>")
+		        	$("#msgPopup").popup("open")
 		        	disable_swipe = true;
-		        	//this.resetStopwatch();
+		        	this.resetStopwatch();
 		        }
 		    }
 		    this.resetStopwatch = function() {
@@ -477,7 +494,6 @@
 		}
 
 		function add_more_time(){
-			$(".maze_block").removeClass("more_time");
 			$(".map_poi").show();
 			var $block = $('#r'+more_time_location[0]+'c'+more_time_location[1]);
 			$block.addClass("more_time");
@@ -489,6 +505,8 @@
 
 			var map_translate = "translate("+c * 100+"%, "+r * 100+"%)";
 			$(".map_poi").css("transform",map_translate);
+
+			$block.delay(1000).queue(function(){$block.removeClass("more_time")});
 
 		}
 
@@ -788,6 +806,10 @@
 				function () {
 					$("#flipper").toggleClass("flipped")
 				});
+			$('#instr_btn').click(
+				function () {
+					$("#instructions").toggleClass("show")
+				});
 			$("#save_settings").click(
 				function(){
 					size=parseInt($("#size").val());
@@ -820,10 +842,11 @@
 	</script>
   </head>
   <body onload="initialize()" class="ui-mobile-viewpoint">
-  	<div data-role="page" id="pageone" data-theme="a">
+  	<div data-role="page" id="pageone" data-theme="b" data-dom-cache="true">
 	    <div data-role="header">
 	      <h1>Swipe Maze</h1>
 	      <a href="#" class="settings_btn" id="settings">Settings</a>
+	      <a href="#" id="instr_btn">Instructions</a>
 	    </div>
 
 	    <div id="flipper">
@@ -864,18 +887,22 @@
 		</div>
 
 	    <div data-role="main" class="ui-content main">
-	    	<div> Navigate through the maze by moving through green walls (Swipe away to move towards). If you hit a red wall, you will go back to the beginning. To win, reach one of the edges on the right or bottom. To change the size of the maze or other maze options, click the settings button. </div>
+	    	<div id="instructions" class="instructions"> Navigate through the maze by moving through green walls (Swipe away to move towards). If you hit a red wall, you will go back to the beginning. To win, reach one of the edges on the right or bottom. To change the size of the maze or other maze options, click the settings button. </div>
 		  	<div data-role="controlgroup" data-type="horizontal">
 			  	<!--<div id="show_all" class="ui-btn">Show All</div>-->
 			  	<div id="new_maze" class="ui-btn">New Maze</div>
 			  	<div id="map" class="map">
-			  		<img id="my_location" src="img/10x10blue_box.png"/>
+			  		<div id="my_location"></div>
 			  		<div class="map_poi"></div>
 			  	</div>
 			  	<div class="message">
 				  	<div id="maze_timer"></div>
 				  	<div id="countdown_timer"></div>
 				  	<div id="message"></div>
+				  	<div data-role="popup" id="msgPopup" data-transition="pop" class="ui-content">
+				  		<a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+				  		<p id="popup_msg"></p>
+				    </div>
 				</div>
 			</div>
 		  	<div id="maze_holder">
